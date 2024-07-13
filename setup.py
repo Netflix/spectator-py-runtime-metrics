@@ -19,7 +19,7 @@ setup(
     author_email="netflix-atlas@googlegroups.com",
     license="Apache 2.0",
     url="https://github.com/Netflix/spectator-py-runtime-metrics",
-    packages=["spectator"],
+    packages=["runmetrics"],
     install_requires=["netflix-spectator-py==1.0.0rc1"],
     extras_require={
         "dev": [
