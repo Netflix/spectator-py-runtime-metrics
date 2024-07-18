@@ -43,16 +43,16 @@ endif
 ## clean: cleanup the project
 .PHONY: clean
 clean:
-	rm -rf .coverage htmlcov netflix_spectator_py.egg-info
-	find spectator tests -name __pycache__ -prune -exec rm -rf {} \;
+	rm -rf .coverage htmlcov netflix_spectator_py_runtime_metrics.egg-info
+	find runmetrics tests -name __pycache__ -prune -exec rm -rf {} \;
 
 ## test: run tests with coverage enabled
 .PHONY: test
 test:
 ifeq ($(SYSTEM), Darwin)
-	$(ACTIVATE) pytest --cov=spectator tests
+	$(ACTIVATE) pytest --cov=runmetrics tests
 else
-	pytest --cov=spectator tests
+	pytest --cov=runmetrics tests
 endif
 
 ## coverage: produce a coverage report
@@ -74,9 +74,9 @@ endif
 .PHONY: lint
 lint:
 ifeq ($(SYSTEM), Darwin)
-	$(ACTIVATE) pylint --rcfile=.pylintrc-relaxed spectator tests
+	$(ACTIVATE) pylint --rcfile=.pylintrc-relaxed runmetrics tests
 else
-	pylint --rcfile=.pylintrc-relaxed spectator tests
+	pylint --rcfile=.pylintrc-relaxed runmetrics tests
 endif
 
 ## check-manifest: validate the manifest file
