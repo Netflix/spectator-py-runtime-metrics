@@ -54,12 +54,12 @@ class StatsCollector:
         self._threading_active = self._registry.gauge("py.threading.active")
 
     def _target(self):
-        self._logger.info(f"start collecting runtime metrics every {self._period} seconds")
+        self._logger.info("start collecting runtime metrics every %s seconds", self._period)
         while self._enabled:
-            self._logger.debug(f"collect runtime metrics")
+            self._logger.debug("collect runtime metrics")
             self.collect_stats()
             time.sleep(self._period)
-        self._logger.info(f"stop collecting runtime metrics")
+        self._logger.info("stop collecting runtime metrics")
 
     def collect_stats(self):
         self._collect_fd_stats()
