@@ -1,5 +1,4 @@
 import unittest
-from sys import platform
 
 from spectator.config import Config
 from spectator.registry import Registry
@@ -10,8 +9,6 @@ from runmetrics.stats_collector import StatsCollector
 class MockStatsCollector(StatsCollector):
     def _collect_fd_stats(self):
         self._fd_max.set(100)
-        if platform == "linux":
-            self._fd_allocated.set(101)
 
     def _collect_gc_stats(self):
         self._gc_enabled.set(200)
