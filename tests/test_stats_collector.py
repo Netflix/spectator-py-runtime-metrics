@@ -1,4 +1,4 @@
-import unittest
+import unittest.mock
 
 from spectator.config import Config
 from spectator.registry import Registry
@@ -39,9 +39,9 @@ class MockStatsCollector(StatsCollector):
         self._threading_active.set(500)
 
 
+@unittest.mock.patch("os.getpid", return_value=1)
 class StatsCollectorTest(unittest.TestCase):
-
-    def test_collect_stats(self):
+    def test_collect_stats(self, mock_getpid):
         r = Registry(Config("memory"))
         MockStatsCollector(r).collect_stats()
         self.assertEqual(29, len(r.writer().get()))
@@ -75,6 +75,6 @@ class StatsCollectorTest(unittest.TestCase):
             'g:py.resource.blockOperations,id=output:406',
             'g:py.resource.contextSwitches,id=voluntary:407',
             'g:py.resource.contextSwitches,id=involuntary:408',
-            'g:py.threading.active:500'
+            'g:py.threading.active,pid=1:500'
         ]
         self.assertEqual(expected, r.writer().get())

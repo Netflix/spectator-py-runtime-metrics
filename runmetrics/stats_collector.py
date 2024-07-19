@@ -51,7 +51,7 @@ class StatsCollector:
         self._ru_nivcsw = self._registry.gauge("py.resource.contextSwitches", {"id": "involuntary"})
 
         # threading metrics
-        self._threading_active = self._registry.gauge("py.threading.active")
+        self._threading_active = self._registry.gauge("py.threading.active", {"pid": f"{os.getpid()}"})
 
     def _target(self):
         self._logger.info("start collecting runtime metrics every %s seconds", self._period)
