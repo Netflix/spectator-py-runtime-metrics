@@ -3,9 +3,9 @@ import logging
 import multiprocessing as mp
 import os
 import resource
+import sys
 import threading
 import time
-from sys import platform
 from typing import Dict
 
 from spectator.meter.gauge import Gauge
@@ -15,43 +15,44 @@ from spectator.registry import Registry
 class StatsCollector:
     def __init__(self, registry: Registry):
         self._registry = registry
-        self._logger = logging.getLogger("runmetrics.StatsCollector")
+        self._logger = logging.getLogger(__name__)
         self._enabled = True
         self._period = 30
+        self._pid = os.getpid()
 
         # file descriptor metrics
-        self._fd_allocated = self._registry.gauge("py.fd", {"id": "allocated"})
-        self._fd_max = self._registry.gauge("py.fd", {"id": "max"})
+        self._fd_allocated = self._registry.gauge("py.fd", {"id": "allocated", "pid": f"{self._pid}"})
+        self._fd_max = self._registry.gauge("py.fd", {"id": "max", "pid": f"{self._pid}"})
 
         # garbage collector metrics
-        self._gc_enabled = self._registry.gauge("py.gc.enabled")
+        self._gc_enabled = self._registry.gauge("py.gc.enabled", {"pid": f"{self._pid}"})
 
         self._gc_gen: Dict[int, Dict[str, Gauge]] = {}
         for i in range(0, 3):
             self._gc_gen[i] = {}
-            self._gc_gen[i]["collections"] = self._registry.gauge("py.gc.collections", {"gen": f"{i}"})
-            self._gc_gen[i]["collected"] = self._registry.gauge("py.gc.collected", {"gen": f"{i}"})
-            self._gc_gen[i]["uncollectable"] = self._registry.gauge("py.gc.uncollectable", {"gen": f"{i}"})
-            self._gc_gen[i]["threshold"] = self._registry.gauge("py.gc.threshold", {"gen": f"{i}"})
-            self._gc_gen[i]["count"] = self._registry.gauge("py.gc.count", {"gen": f"{i}"})
+            self._gc_gen[i]["collections"] = self._registry.gauge("py.gc.collections", {"gen": f"{i}", "pid": f"{self._pid}"})
+            self._gc_gen[i]["collected"] = self._registry.gauge("py.gc.collected", {"gen": f"{i}", "pid": f"{self._pid}"})
+            self._gc_gen[i]["uncollectable"] = self._registry.gauge("py.gc.uncollectable", {"gen": f"{i}", "pid": f"{self._pid}"})
+            self._gc_gen[i]["threshold"] = self._registry.gauge("py.gc.threshold", {"gen": f"{i}", "pid": f"{self._pid}"})
+            self._gc_gen[i]["count"] = self._registry.gauge("py.gc.count", {"gen": f"{i}", "pid": f"{self._pid}"})
 
         # multiprocessing metrics
-        self._mp_active_children = self._registry.gauge("py.mp.activeChildren")
-        self._mp_cpu = self._registry.gauge("py.mp.cpu")
+        self._mp_active_children = self._registry.gauge("py.mp.activeChildren", {"pid": f"{self._pid}"})
+        self._mp_cpu = self._registry.gauge("py.mp.cpu", {"pid": f"{self._pid}"})
 
         # resource usage metrics
-        self._ru_utime = self._registry.gauge("py.resource.time", {"mode": "user"})
-        self._ru_stime = self._registry.gauge("py.resource.time", {"mode": "system"})
-        self._ru_maxrss = self._registry.gauge("py.resource.maxResidentSetSize")
-        self._ru_minflt = self._registry.gauge("py.resource.pageFaults", {"io.required": "false"})
-        self._ru_majflt = self._registry.gauge("py.resource.pageFaults", {"io.required": "true"})
-        self._ru_inblock = self._registry.gauge("py.resource.blockOperations", {"id": "input"})
-        self._ru_oublock = self._registry.gauge("py.resource.blockOperations", {"id": "output"})
-        self._ru_nvcsw = self._registry.gauge("py.resource.contextSwitches", {"id": "voluntary"})
-        self._ru_nivcsw = self._registry.gauge("py.resource.contextSwitches", {"id": "involuntary"})
+        self._ru_utime = self._registry.gauge("py.resource.time", {"mode": "user", "pid": f"{self._pid}"})
+        self._ru_stime = self._registry.gauge("py.resource.time", {"mode": "system", "pid": f"{self._pid}"})
+        self._ru_maxrss = self._registry.gauge("py.resource.maxResidentSetSize", {"pid": f"{self._pid}"})
+        self._ru_minflt = self._registry.gauge("py.resource.pageFaults", {"io.required": "false", "pid": f"{self._pid}"})
+        self._ru_majflt = self._registry.gauge("py.resource.pageFaults", {"io.required": "true", "pid": f"{self._pid}"})
+        self._ru_inblock = self._registry.gauge("py.resource.blockOperations", {"id": "input", "pid": f"{self._pid}"})
+        self._ru_oublock = self._registry.gauge("py.resource.blockOperations", {"id": "output", "pid": f"{self._pid}"})
+        self._ru_nvcsw = self._registry.gauge("py.resource.contextSwitches", {"id": "voluntary", "pid": f"{self._pid}"})
+        self._ru_nivcsw = self._registry.gauge("py.resource.contextSwitches", {"id": "involuntary", "pid": f"{self._pid}"})
 
         # threading metrics
-        self._threading_active = self._registry.gauge("py.threading.active", {"pid": f"{os.getpid()}"})
+        self._threading_active = self._registry.gauge("py.threading.active", {"pid": f"{self._pid}"})
 
     def _target(self):
         self._logger.info("start collecting runtime metrics every %s seconds", self._period)
@@ -70,11 +71,14 @@ class StatsCollector:
 
     def _collect_fd_stats(self):
         self._fd_max.set(resource.RLIMIT_NOFILE)
-        if platform == "linux":
+        if sys.platform == "linux":
             self._fd_allocated.set(len(os.listdir("/proc/self/fd")))
 
     def _collect_gc_stats(self):
-        self._gc_enabled.set(gc.isenabled())
+        if gc.isenabled():
+            self._gc_enabled.set(1)
+        else:
+            self._gc_enabled.set(0)
 
         stats = gc.get_stats()
         threshold = gc.get_threshold()
