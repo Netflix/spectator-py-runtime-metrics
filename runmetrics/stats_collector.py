@@ -44,6 +44,7 @@ class StatsCollector:
             self._gc_gen[i]["count"] = self._registry.gauge("py.gc.count", self._with_pid_tag({"gen": f"{i}"}))
 
         self._gc_pause = self._registry.timer("py.gc.pause", self._with_pid_tag({}))
+        self._gc_time_since_last = self._registry.age_gauge("py.gc.timeSinceLast", self._with_pid_tag({}))
 
         if platform.python_implementation() == "CPython":
             gc.callbacks.append(self._gc_callback)
@@ -76,6 +77,7 @@ class StatsCollector:
 
     def _gc_callback(self, phase: str, info: Dict[str, int]) -> None:
         if phase == "start":
+            self._gc_time_since_last.now()
             self._gc_start = time.monotonic()
         else:
             self._gc_pause.record(time.monotonic() - self._gc_start)
