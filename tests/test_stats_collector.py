@@ -16,8 +16,6 @@ GC_GET_STATS = [
 Rusage = namedtuple('Rusage', ['ru_utime', 'ru_stime', 'ru_maxrss', 'ru_minflt',
                                'ru_majflt', 'ru_inblock', 'ru_oublock', 'ru_nvcsw', 'ru_nivcsw'])
 
-RESOURCE_GETRUSAGE = Rusage(1, 2, 3, 4, 5, 6, 7, 8, 9)
-
 
 @mock.patch("resource.RLIMIT_NOFILE", 2)
 @mock.patch("sys.platform", "linux")
@@ -26,17 +24,18 @@ RESOURCE_GETRUSAGE = Rusage(1, 2, 3, 4, 5, 6, 7, 8, 9)
 @mock.patch("gc.get_count", return_value=(200, 201, 202))
 @mock.patch("gc.isenabled", return_value=True)
 @mock.patch("multiprocessing.active_children", return_value=[])
-@mock.patch("multiprocessing.cpu_count", return_value=4)
+@mock.patch("os.cpu_count", return_value=4)
 @mock.patch("os.getpid", return_value=7)
 @mock.patch("os.listdir", return_value=["0"])
-@mock.patch("resource.getrusage", return_value=RESOURCE_GETRUSAGE)
+@mock.patch("platform.python_implementation", return_value="disable_callback")
+@mock.patch("resource.getrusage", return_value=Rusage(1, 2, 3, 4, 5, 6, 7, 8, 9))
 @mock.patch("threading.active_count", return_value=5)
 class StatsCollectorTest(TestCase):
     def test_collect_stats(self, gc_get_stats, gc_get_threshold, gc_get_count, gc_isenabled,
-                           mp_active_children, mp_cpu_count, os_getpid, os_listdir,
-                           resource_getrusage, threading_active_count):
+                           mp_active_children, os_cpu_count, os_getpid, os_listdir,
+                           python_impl, resource_getrusage, threading_active_count):
         r = Registry(Config("memory"))
-        StatsCollector(r).collect_stats()
+        StatsCollector(r, enable_pid_tag=True).collect_stats()
 
         messages = r.writer().get()
         self.assertEqual(30, len(messages))
@@ -69,9 +68,9 @@ class StatsCollectorTest(TestCase):
 
         mp_expected = [
             'g:py.mp.activeChildren,pid=7:0',
-            'g:py.mp.cpu,pid=7:4',
+            'g:py.os.cpu,pid=7:4',
         ]
-        self.assertEqual(mp_expected, [m for m in messages if 'py.mp' in m])
+        self.assertEqual(mp_expected, [m for m in messages if 'py.mp' in m or 'py.os' in m])
 
         resource_expected = [
             'g:py.resource.time,mode=user,pid=7:1',
