@@ -16,7 +16,8 @@ from runmetrics.stats_collector import StatsCollector
 
 if __name__ == "__main__":
     registry = Registry()
-    StatsCollector(registry).start()
+    # enable the `pid` tag on all metrics, if you are forking processes - default is False
+    StatsCollector(registry, enable_pid_tag=False).start()
 ```
 
 ## References
@@ -24,6 +25,7 @@ if __name__ == "__main__":
 * Python
     * [gc — Garbage Collector interface](https://docs.python.org/3/library/gc.html)
     * [multiprocessing — Process-based parallelism](https://docs.python.org/3/library/multiprocessing.html)
+    * [os — Miscellaneous operating system interfaces](https://docs.python.org/3/library/os.html)
     * [resource — Resource usage information](https://docs.python.org/3/library/resource.html)
     * [threading — Thread-based parallelism](https://docs.python.org/3/library/threading.html)
 * Linux
