@@ -16,9 +16,24 @@ from runmetrics.stats_collector import StatsCollector
 
 if __name__ == "__main__":
     registry = Registry()
-    # enable the `pid` tag on all metrics, if you are forking processes - default is False
-    StatsCollector(registry, enable_pid_tag=False).start()
+    # optionally add a stable worker id tag to runtime metrics, for forked processes
+    StatsCollector(registry, worker_id=None).start()
 ```
+
+## Worker IDs
+
+For long-running Python applications, it is common to use a forking process model to increase the
+ability to handle load. Usually, these rely upon the `pid` to uniquely identify the workers, but
+some of these frameworks offer either a stable worker id or the ability to create stable worker id
+values through the addition of callbacks.
+
+Ideally, the worker id is a string in the range `0..N`, with `N<16` in most cases. Most process
+forking frameworks have a configuration setting for the maximum number of workers, which helps to
+keep these values constrained.
+
+Using raw `str(os.getpid())` values as the worker id is not recommended, because it can lead to large
+increases in metrics volume in the Atlas backend, if processes restart regularly over the lifetime of
+an instance.
 
 ## References
 

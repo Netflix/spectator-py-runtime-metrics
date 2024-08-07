@@ -19,57 +19,56 @@ except ImportError:
 
 
 class StatsCollector:
-    def __init__(self, registry: Registry, enable_pid_tag: bool = False, period: int = 30):
+    def __init__(self, registry: Registry, worker_id: str = None, period: int = 30):
         self._registry = registry
         self._logger = logging.getLogger(__name__)
         self._enabled = True
-        self._enable_pid_tag = enable_pid_tag
         self._period = period
-        self._pid = os.getpid()
+        self._worker_id = worker_id
 
         # file descriptor metrics
-        self._fd_allocated = self._registry.gauge("py.fd", self._with_pid_tag({"id": "allocated"}))
-        self._fd_max = self._registry.gauge("py.fd", self._with_pid_tag({"id": "max"}))
+        self._fd_allocated = self._registry.gauge("py.fd", self._with_worker_id({"id": "allocated"}))
+        self._fd_max = self._registry.gauge("py.fd", self._with_worker_id({"id": "max"}))
 
         # garbage collector metrics
-        self._gc_enabled = self._registry.gauge("py.gc.enabled", self._with_pid_tag({}))
+        self._gc_enabled = self._registry.gauge("py.gc.enabled", self._with_worker_id({}))
 
         self._gc_gen: Dict[int, Dict[str, Gauge]] = {}
         for i in range(0, 3):
             self._gc_gen[i] = {}
-            self._gc_gen[i]["collections"] = self._registry.gauge("py.gc.collections", self._with_pid_tag({"gen": f"{i}"}))
-            self._gc_gen[i]["collected"] = self._registry.gauge("py.gc.collected", self._with_pid_tag({"gen": f"{i}"}))
-            self._gc_gen[i]["uncollectable"] = self._registry.gauge("py.gc.uncollectable", self._with_pid_tag({"gen": f"{i}"}))
-            self._gc_gen[i]["threshold"] = self._registry.gauge("py.gc.threshold", self._with_pid_tag({"gen": f"{i}"}))
-            self._gc_gen[i]["count"] = self._registry.gauge("py.gc.count", self._with_pid_tag({"gen": f"{i}"}))
+            self._gc_gen[i]["collections"] = self._registry.gauge("py.gc.collections", self._with_worker_id({"gen": f"{i}"}))
+            self._gc_gen[i]["collected"] = self._registry.gauge("py.gc.collected", self._with_worker_id({"gen": f"{i}"}))
+            self._gc_gen[i]["uncollectable"] = self._registry.gauge("py.gc.uncollectable", self._with_worker_id({"gen": f"{i}"}))
+            self._gc_gen[i]["threshold"] = self._registry.gauge("py.gc.threshold", self._with_worker_id({"gen": f"{i}"}))
+            self._gc_gen[i]["count"] = self._registry.gauge("py.gc.count", self._with_worker_id({"gen": f"{i}"}))
 
-        self._gc_pause = self._registry.timer("py.gc.pause", self._with_pid_tag({}))
-        self._gc_time_since_last = self._registry.age_gauge("py.gc.timeSinceLast", self._with_pid_tag({}))
+        self._gc_pause = self._registry.timer("py.gc.pause", self._with_worker_id({}))
+        self._gc_time_since_last = self._registry.age_gauge("py.gc.timeSinceLast", self._with_worker_id({}))
 
         if platform.python_implementation() == "CPython":
             gc.callbacks.append(self._gc_callback)
 
         # multiprocessing and os metrics
-        self._mp_active_children = self._registry.gauge("py.mp.activeChildren", self._with_pid_tag({}))
-        self._os_cpu = self._registry.gauge("py.os.cpu", self._with_pid_tag({}))
+        self._mp_active_children = self._registry.gauge("py.mp.activeChildren", self._with_worker_id({}))
+        self._os_cpu = self._registry.gauge("py.os.cpu", self._with_worker_id({}))
 
         # resource usage metrics
-        self._ru_utime = self._registry.gauge("py.resource.time", self._with_pid_tag({"mode": "user"}))
-        self._ru_stime = self._registry.gauge("py.resource.time", self._with_pid_tag({"mode": "system"}))
-        self._ru_maxrss = self._registry.gauge("py.resource.maxResidentSetSize", self._with_pid_tag({}))
-        self._ru_minflt = self._registry.gauge("py.resource.pageFaults", self._with_pid_tag({"io.required": "false"}))
-        self._ru_majflt = self._registry.gauge("py.resource.pageFaults", self._with_pid_tag({"io.required": "true"}))
-        self._ru_inblock = self._registry.gauge("py.resource.blockOperations", self._with_pid_tag({"id": "input"}))
-        self._ru_oublock = self._registry.gauge("py.resource.blockOperations", self._with_pid_tag({"id": "output"}))
-        self._ru_nvcsw = self._registry.gauge("py.resource.contextSwitches", self._with_pid_tag({"id": "voluntary"}))
-        self._ru_nivcsw = self._registry.gauge("py.resource.contextSwitches", self._with_pid_tag({"id": "involuntary"}))
+        self._ru_utime = self._registry.gauge("py.resource.time", self._with_worker_id({"mode": "user"}))
+        self._ru_stime = self._registry.gauge("py.resource.time", self._with_worker_id({"mode": "system"}))
+        self._ru_maxrss = self._registry.gauge("py.resource.maxResidentSetSize", self._with_worker_id({}))
+        self._ru_minflt = self._registry.gauge("py.resource.pageFaults", self._with_worker_id({"io.required": "false"}))
+        self._ru_majflt = self._registry.gauge("py.resource.pageFaults", self._with_worker_id({"io.required": "true"}))
+        self._ru_inblock = self._registry.gauge("py.resource.blockOperations", self._with_worker_id({"id": "input"}))
+        self._ru_oublock = self._registry.gauge("py.resource.blockOperations", self._with_worker_id({"id": "output"}))
+        self._ru_nvcsw = self._registry.gauge("py.resource.contextSwitches", self._with_worker_id({"id": "voluntary"}))
+        self._ru_nivcsw = self._registry.gauge("py.resource.contextSwitches", self._with_worker_id({"id": "involuntary"}))
 
         # threading metrics
-        self._threading_active = self._registry.gauge("py.threading.active", self._with_pid_tag({}))
+        self._threading_active = self._registry.gauge("py.threading.active", self._with_worker_id({}))
 
-    def _with_pid_tag(self, tags: Dict[str, str]) -> Optional[Dict[str, str]]:
-        if self._enable_pid_tag:
-            tags.update({"pid": f"{self._pid}"})
+    def _with_worker_id(self, tags: Dict[str, str]) -> Optional[Dict[str, str]]:
+        if self._worker_id is not None:
+            tags.update({"worker.id": f"{self._worker_id}"})
         if len(tags) == 0:
             return None
         else:
