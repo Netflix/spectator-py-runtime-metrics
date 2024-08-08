@@ -19,7 +19,7 @@ except ImportError:
 
 
 class StatsCollector:
-    def __init__(self, registry: Registry, worker_id: str = None, period: int = 30):
+    def __init__(self, registry: Registry, worker_id: Optional[str] = None, period: int = 30):
         self._registry = registry
         self._logger = logging.getLogger(__name__)
         self._enabled = True
