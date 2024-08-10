@@ -48,19 +48,19 @@ class StatsCollectorTest(TestCase):
 
         gc_expected = [
             'g:py.gc.enabled,worker.id=7:1',
-            'g:py.gc.collections,gen=0,worker.id=7:10',
-            'g:py.gc.collected,gen=0,worker.id=7:11',
-            'g:py.gc.uncollectable,gen=0,worker.id=7:12',
+            'C:py.gc.collections,gen=0,worker.id=7:10',
+            'C:py.gc.collected,gen=0,worker.id=7:11',
+            'C:py.gc.uncollectable,gen=0,worker.id=7:12',
             'g:py.gc.threshold,gen=0,worker.id=7:100',
             'g:py.gc.count,gen=0,worker.id=7:200',
-            'g:py.gc.collections,gen=1,worker.id=7:20',
-            'g:py.gc.collected,gen=1,worker.id=7:21',
-            'g:py.gc.uncollectable,gen=1,worker.id=7:22',
+            'C:py.gc.collections,gen=1,worker.id=7:20',
+            'C:py.gc.collected,gen=1,worker.id=7:21',
+            'C:py.gc.uncollectable,gen=1,worker.id=7:22',
             'g:py.gc.threshold,gen=1,worker.id=7:101',
             'g:py.gc.count,gen=1,worker.id=7:201',
-            'g:py.gc.collections,gen=2,worker.id=7:30',
-            'g:py.gc.collected,gen=2,worker.id=7:31',
-            'g:py.gc.uncollectable,gen=2,worker.id=7:32',
+            'C:py.gc.collections,gen=2,worker.id=7:30',
+            'C:py.gc.collected,gen=2,worker.id=7:31',
+            'C:py.gc.uncollectable,gen=2,worker.id=7:32',
             'g:py.gc.threshold,gen=2,worker.id=7:102',
             'g:py.gc.count,gen=2,worker.id=7:202',
         ]
@@ -73,15 +73,15 @@ class StatsCollectorTest(TestCase):
         self.assertEqual(mp_expected, [m for m in messages if 'py.mp' in m or 'py.os' in m])
 
         resource_expected = [
-            'g:py.resource.time,mode=user,worker.id=7:1',
-            'g:py.resource.time,mode=system,worker.id=7:2',
+            'C:py.resource.time,mode=user,worker.id=7:1',
+            'C:py.resource.time,mode=system,worker.id=7:2',
             'g:py.resource.maxResidentSetSize,worker.id=7:3',
-            'g:py.resource.pageFaults,io.required=false,worker.id=7:4',
-            'g:py.resource.pageFaults,io.required=true,worker.id=7:5',
-            'g:py.resource.blockOperations,id=input,worker.id=7:6',
-            'g:py.resource.blockOperations,id=output,worker.id=7:7',
-            'g:py.resource.contextSwitches,id=voluntary,worker.id=7:8',
-            'g:py.resource.contextSwitches,id=involuntary,worker.id=7:9',
+            'C:py.resource.pageFaults,io.required=false,worker.id=7:4',
+            'C:py.resource.pageFaults,io.required=true,worker.id=7:5',
+            'C:py.resource.blockOperations,id=input,worker.id=7:6',
+            'C:py.resource.blockOperations,id=output,worker.id=7:7',
+            'C:py.resource.contextSwitches,id=voluntary,worker.id=7:8',
+            'C:py.resource.contextSwitches,id=involuntary,worker.id=7:9',
         ]
         self.assertEqual(resource_expected, [m for m in messages if 'py.resource' in m])
 
@@ -108,19 +108,19 @@ class StatsCollectorTest(TestCase):
 
         gc_expected = [
             'g:py.gc.enabled:1',
-            'g:py.gc.collections,gen=0:10',
-            'g:py.gc.collected,gen=0:11',
-            'g:py.gc.uncollectable,gen=0:12',
+            'C:py.gc.collections,gen=0:10',
+            'C:py.gc.collected,gen=0:11',
+            'C:py.gc.uncollectable,gen=0:12',
             'g:py.gc.threshold,gen=0:100',
             'g:py.gc.count,gen=0:200',
-            'g:py.gc.collections,gen=1:20',
-            'g:py.gc.collected,gen=1:21',
-            'g:py.gc.uncollectable,gen=1:22',
+            'C:py.gc.collections,gen=1:20',
+            'C:py.gc.collected,gen=1:21',
+            'C:py.gc.uncollectable,gen=1:22',
             'g:py.gc.threshold,gen=1:101',
             'g:py.gc.count,gen=1:201',
-            'g:py.gc.collections,gen=2:30',
-            'g:py.gc.collected,gen=2:31',
-            'g:py.gc.uncollectable,gen=2:32',
+            'C:py.gc.collections,gen=2:30',
+            'C:py.gc.collected,gen=2:31',
+            'C:py.gc.uncollectable,gen=2:32',
             'g:py.gc.threshold,gen=2:102',
             'g:py.gc.count,gen=2:202',
         ]
@@ -133,15 +133,15 @@ class StatsCollectorTest(TestCase):
         self.assertEqual(mp_expected, [m for m in messages if 'py.mp' in m or 'py.os' in m])
 
         resource_expected = [
-            'g:py.resource.time,mode=user:1',
-            'g:py.resource.time,mode=system:2',
+            'C:py.resource.time,mode=user:1',
+            'C:py.resource.time,mode=system:2',
             'g:py.resource.maxResidentSetSize:3',
-            'g:py.resource.pageFaults,io.required=false:4',
-            'g:py.resource.pageFaults,io.required=true:5',
-            'g:py.resource.blockOperations,id=input:6',
-            'g:py.resource.blockOperations,id=output:7',
-            'g:py.resource.contextSwitches,id=voluntary:8',
-            'g:py.resource.contextSwitches,id=involuntary:9',
+            'C:py.resource.pageFaults,io.required=false:4',
+            'C:py.resource.pageFaults,io.required=true:5',
+            'C:py.resource.blockOperations,id=input:6',
+            'C:py.resource.blockOperations,id=output:7',
+            'C:py.resource.contextSwitches,id=voluntary:8',
+            'C:py.resource.contextSwitches,id=involuntary:9',
         ]
         self.assertEqual(resource_expected, [m for m in messages if 'py.resource' in m])
 

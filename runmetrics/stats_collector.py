@@ -7,9 +7,10 @@ import resource
 import sys
 import threading
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from spectator.meter.gauge import Gauge
+from spectator.meter.monotonic_counter import MonotonicCounter
 from spectator.registry import Registry
 
 try:
@@ -33,12 +34,12 @@ class StatsCollector:
         # garbage collector metrics
         self._gc_enabled = self._registry.gauge("py.gc.enabled", self._with_worker_id({}))
 
-        self._gc_gen: Dict[int, Dict[str, Gauge]] = {}
+        self._gc_gen: Dict[int, Dict[str, Union[Gauge, MonotonicCounter]]] = {}
         for i in range(0, 3):
             self._gc_gen[i] = {}
-            self._gc_gen[i]["collections"] = self._registry.gauge("py.gc.collections", self._with_worker_id({"gen": f"{i}"}))
-            self._gc_gen[i]["collected"] = self._registry.gauge("py.gc.collected", self._with_worker_id({"gen": f"{i}"}))
-            self._gc_gen[i]["uncollectable"] = self._registry.gauge("py.gc.uncollectable", self._with_worker_id({"gen": f"{i}"}))
+            self._gc_gen[i]["collections"] = self._registry.monotonic_counter("py.gc.collections", self._with_worker_id({"gen": f"{i}"}))
+            self._gc_gen[i]["collected"] = self._registry.monotonic_counter("py.gc.collected", self._with_worker_id({"gen": f"{i}"}))
+            self._gc_gen[i]["uncollectable"] = self._registry.monotonic_counter("py.gc.uncollectable", self._with_worker_id({"gen": f"{i}"}))
             self._gc_gen[i]["threshold"] = self._registry.gauge("py.gc.threshold", self._with_worker_id({"gen": f"{i}"}))
             self._gc_gen[i]["count"] = self._registry.gauge("py.gc.count", self._with_worker_id({"gen": f"{i}"}))
 
@@ -53,15 +54,15 @@ class StatsCollector:
         self._os_cpu = self._registry.gauge("py.os.cpu", self._with_worker_id({}))
 
         # resource usage metrics
-        self._ru_utime = self._registry.gauge("py.resource.time", self._with_worker_id({"mode": "user"}))
-        self._ru_stime = self._registry.gauge("py.resource.time", self._with_worker_id({"mode": "system"}))
+        self._ru_utime = self._registry.monotonic_counter("py.resource.time", self._with_worker_id({"mode": "user"}))
+        self._ru_stime = self._registry.monotonic_counter("py.resource.time", self._with_worker_id({"mode": "system"}))
         self._ru_maxrss = self._registry.gauge("py.resource.maxResidentSetSize", self._with_worker_id({}))
-        self._ru_minflt = self._registry.gauge("py.resource.pageFaults", self._with_worker_id({"io.required": "false"}))
-        self._ru_majflt = self._registry.gauge("py.resource.pageFaults", self._with_worker_id({"io.required": "true"}))
-        self._ru_inblock = self._registry.gauge("py.resource.blockOperations", self._with_worker_id({"id": "input"}))
-        self._ru_oublock = self._registry.gauge("py.resource.blockOperations", self._with_worker_id({"id": "output"}))
-        self._ru_nvcsw = self._registry.gauge("py.resource.contextSwitches", self._with_worker_id({"id": "voluntary"}))
-        self._ru_nivcsw = self._registry.gauge("py.resource.contextSwitches", self._with_worker_id({"id": "involuntary"}))
+        self._ru_minflt = self._registry.monotonic_counter("py.resource.pageFaults", self._with_worker_id({"io.required": "false"}))
+        self._ru_majflt = self._registry.monotonic_counter("py.resource.pageFaults", self._with_worker_id({"io.required": "true"}))
+        self._ru_inblock = self._registry.monotonic_counter("py.resource.blockOperations", self._with_worker_id({"id": "input"}))
+        self._ru_oublock = self._registry.monotonic_counter("py.resource.blockOperations", self._with_worker_id({"id": "output"}))
+        self._ru_nvcsw = self._registry.monotonic_counter("py.resource.contextSwitches", self._with_worker_id({"id": "voluntary"}))
+        self._ru_nivcsw = self._registry.monotonic_counter("py.resource.contextSwitches", self._with_worker_id({"id": "involuntary"}))
 
         # threading metrics
         self._threading_active = self._registry.gauge("py.threading.active", self._with_worker_id({}))
