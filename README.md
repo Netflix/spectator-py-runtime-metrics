@@ -11,7 +11,7 @@ See the [Atlas Documentation] site for more details on `spectator-py`.
 ## Instrumenting Code
 
 ```python
-from spectator.registry import Registry
+from spectator import Registry
 from runmetrics.stats_collector import StatsCollector
 
 if __name__ == "__main__":
